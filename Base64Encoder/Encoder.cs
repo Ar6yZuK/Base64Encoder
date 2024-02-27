@@ -1,11 +1,7 @@
-﻿using System.Buffers;
-using System.Buffers.Text;
-using System.Text;
+﻿using Ar6.Base64.Operations;
 
-// from private Property in Base64Encoder = 1610612733
-const int MaximumEncodeLength = int.MaxValue / 4 * 3;
-
-Console.SetIn(new StreamReader(Console.OpenStandardInput(), Console.InputEncoding, false, MaximumEncodeLength));
+Ar6.ConsoleHelper.SetConsoleInputLength();
+var base64Operations = new Base64Operations();
 
 while (true)
 {
@@ -14,19 +10,16 @@ while (true)
 	if (text is null)
 		return;
 
-	string result = Encode(text);
+	string result;
+	try
+	{
+		result = base64Operations.DecodeOrEncode(text, decode: false);
+	}
+	catch (InvalidOperationResultException ex)
+	{
+		Console.WriteLine(ex);
+		continue;
+	}
 
 	Console.WriteLine(result);
-}
-
-static string Encode(string textToEncode)
-{
-	int destinationLength = Base64.GetMaxEncodedToUtf8Length(textToEncode.Length);
-	Span<byte> result = stackalloc byte[destinationLength];
-
-	OperationStatus operationResult = Base64.EncodeToUtf8(Encoding.UTF8.GetBytes(textToEncode), result, out int bytesConsumed, out int bytesWritten);
-	if (operationResult is not OperationStatus.Done)
-		throw new Exception(operationResult.ToString());
-
-	return Encoding.UTF8.GetString(result.Slice(0, bytesWritten));
 }
